@@ -92,9 +92,12 @@ function load_mailbox(mailbox, message="") {
         emails.forEach((item) => {
             console.log(item);
 
-            const email_div = document.createElement("div");
-            email_div.classList.add("email_div");
-            //email_div.addEventListener("click", () => read_email(item["id"]));
+            const email_element = document.createElement("div");
+            email_element.classList.add("email_element");
+
+            build_emails(item, email_element, mailbox);
+
+            //email_element.addEventListener("click", () => read_email(item["id"]));
             
             document.querySelector(".email_div").innerHTML = `${item}`;
             document.querySelector("#emails-view").appendChild(email_div);
@@ -105,3 +108,30 @@ function load_mailbox(mailbox, message="") {
 }
 
 // TODO: function read_email
+
+// TODO function build_emails
+function build_emails(item, email_element, mailbox) {
+    if (mailbox === "inbox" && item["archived"]) {
+        return;
+    }
+    else if (mailbox === "archive" && !item["archived"]) {
+        return;
+    }
+    
+    const content = document.createElement("div");
+
+    const recipients = document.createElement("strong")
+
+    // decide what goes into recipients element, add HTML
+    if (mailbox === "sent") {
+        recipients.innerHTML = item["recipients"].join(", ") + " ";
+    }
+    else {
+        recipients.innerHTML = item["sender"] + " ";
+    }
+
+    
+    content.appendChild(recipients);
+    content.innerHTML += item["subject"]
+
+}
