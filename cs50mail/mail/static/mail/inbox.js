@@ -45,10 +45,11 @@ function send_email(event) {
     })
     .then(response => response.json())
     .then((result) => {
-        console.log(result);
+        console.log({result});
         // load the sent mailbox
-        load_mailbox("sent", message);
     });
+
+    load_mailbox("sent");
 
 }
 
@@ -65,17 +66,8 @@ function compose_email_view() {
   document.querySelector('#compose-body').value = '';
 }
 
-function load_mailbox(mailbox, message="") {
+function load_mailbox(mailbox) {
   
-  // Delete any messages if any
-  document.querySelector("#message-div").textContent = "";
-
-  // Print a message if any.
-  if (message !== "") {
-    make_alert(message);
-  }
-  
-
 
   // Show the mailbox and hide other views
   document.querySelector('#emails-view').style.display = 'block';
@@ -95,12 +87,11 @@ function load_mailbox(mailbox, message="") {
             const email_element = document.createElement("div");
             email_element.classList.add("email_element");
 
-            build_emails(item, email_element, mailbox);
+            email_processor(item, email_element, mailbox);
 
-            //email_element.addEventListener("click", () => read_email(item["id"]));
+            email_element.addEventListener("click", () => read_email(item["id"]));
             
-            document.querySelector(".email_div").innerHTML = `${item}`;
-            document.querySelector("#emails-view").appendChild(email_div);
+            document.querySelector("#emails-view").appendChild(email_element);
 
             
         });
@@ -109,8 +100,8 @@ function load_mailbox(mailbox, message="") {
 
 // TODO: function read_email
 
-// TODO function build_emails
-function build_emails(item, email_element, mailbox) {
+// TODO function email_processor
+function email_processor(item, email_element, mailbox) {
     if (mailbox === "inbox" && item["archived"]) {
         return;
     }
@@ -118,20 +109,50 @@ function build_emails(item, email_element, mailbox) {
         return;
     }
     
+    // parsing data from json for the email view at mailbox
+    const recipients = document.createElement("strong")
+    recipients.innerHTML = item["recipients"].join(", ") + " ";
+
     const content = document.createElement("div");
 
-    const recipients = document.createElement("strong")
-
-    // decide what goes into recipients element, add HTML
+    // when mailbox owner looks into sent then recipient should we visible
     if (mailbox === "sent") {
         recipients.innerHTML = item["recipients"].join(", ") + " ";
-    }
-    else {
+      } // in inbox, the sender should be shown
+      else {
         recipients.innerHTML = item["sender"] + " ";
-    }
-
-    
+      }
     content.appendChild(recipients);
     content.innerHTML += item["subject"]
+
+    // styling
+
+    // Set and style the date.
+    const date = document.createElement("div");
+    date.innerHTML = item["timestamp"];
+    date.style.display = "inline-block";
+    date.style.float = "right";
+
+    if (item["read"]) {
+        email_element.style.backgroundColor = "grey";
+        date.style.color = "black";
+    } else {
+        date.className = "text-muted";
+    }
+    content.appendChild(date);
+
+    content.style.padding = "10px";
+    email_element.appendChild(content);
+
+
+    // Style the parent element.
+    email_element.style.borderStyle = "solid";
+    email_element.style.borderWidth = "3px";
+    email_element.style.margin = "10px";
+
+}
+
+// Build the email view > function open_email
+function open_email(email_data) {
 
 }
