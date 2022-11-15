@@ -41,15 +41,26 @@ function send_email(event) {
             recipients: recipients,
             subject: subject,
             body: body
+            
         })
     })
     .then(response => response.json())
-    .then((result) => {
+    .then(result => {
         console.log({result});
-        // load the sent mailbox
-    });
+    })
+    .then(fetch("/emails/sent")
+        .then((response) => response.json()) // response is the data received from fetch
+        .then((emails) => {
+            console.log({emails});
 
-    load_mailbox("sent");
+            const email_id = Math.max(...emails.map(item => item.id));
+            console.log({email_id});
+            changeToUnread(email_id);
+            
+    }))
+    .then(load_mailbox("sent"));
+
+    
 
 }
 
@@ -82,8 +93,7 @@ function load_mailbox(mailbox) {
     .then((response) => response.json()) // response is the data received from fetch
     .then((emails) => {
         emails.forEach((item) => {
-            console.log(item);
-
+            
             const email_element = document.createElement("div");
             email_element.classList.add("email_element");
 
@@ -93,14 +103,14 @@ function load_mailbox(mailbox) {
             
             document.querySelector("#emails-view").appendChild(email_element);
 
-            
+
         });
     })
 }
 
-// TODO: function read_email
-
 // TODO function email_processor
+// takes JSON data from loading of mailbox and converts into an email entry 
+// to be shown inside the mailbox
 function email_processor(item, email_element, mailbox) {
     if (mailbox === "inbox" && item["archived"]) {
         return;
@@ -110,20 +120,24 @@ function email_processor(item, email_element, mailbox) {
     }
     
     // parsing data from json for the email view at mailbox
-    const recipients = document.createElement("strong")
-    recipients.innerHTML = item["recipients"].join(", ") + " ";
-
     const content = document.createElement("div");
+    const recipients = document.createElement("em");
+    const pre_description = document.createElement("strong");
+    const subject = document.createElement("strong")
+
+    subject.innerHTML = "Subject: ";
 
     // when mailbox owner looks into sent then recipient should we visible
     if (mailbox === "sent") {
-        recipients.innerHTML = item["recipients"].join(", ") + " ";
+        pre_description.innerHTML = "Sent to: ";
+        recipients.innerHTML = item["recipients"].join(", ") + "    ";
       } // in inbox, the sender should be shown
       else {
-        recipients.innerHTML = item["sender"] + " ";
+        pre_description.innerHTML = "Received from: ";
+        recipients.innerHTML = item["sender"] + "    ";
       }
-    content.appendChild(recipients);
-    content.innerHTML += item["subject"]
+    content.append(pre_description, recipients, subject, item["subject"]);  
+    
 
     // styling
 
@@ -151,6 +165,22 @@ function email_processor(item, email_element, mailbox) {
     email_element.style.margin = "10px";
 
 }
+
+// TODO changeToUnread(email_id)
+
+function changeToUnread(email_id) {
+    // Set the email to unread.
+    fetch(`/emails/${email_id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+            read: false
+        })
+    });
+}
+
+// TODO: function read_email
+
+
 
 // Build the email view > function open_email
 function open_email(email_data) {
